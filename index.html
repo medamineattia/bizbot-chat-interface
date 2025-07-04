@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BizBot Chat</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/botui/build/botui.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/botui/build/botui-theme-default.css" />
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/botui/build/botui.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    #chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <h2>Chat with BizBot</h2>
+    <div id="chatbot">
+      <bot-ui></bot-ui>
+    </div>
+  </div>
+
+  <script>
+    // Generate or retrieve sessionId from localStorage
+    let sessionId = localStorage.getItem('bizbot-session-id');
+    if (!sessionId) {
+      sessionId = 'session-' + Date.now();
+      localStorage.setItem('bizbot-session-id', sessionId);
+    }
+
+    const botui = new BotUI('chatbot');
+
+    function askUser() {
+      botui.action.text({
+        action: {
+          placeholder: 'Posez votre question…'
+        }
+      }).then(function (res) {
+        botui.message.add({ loading: true }).then(function (index) {
+          fetch('https://medattia.app.n8n.cloud/webhook/511c586b-bcbe-4e18-9fc1-294c7e68b91f/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: res.value,
+              sessionId: sessionId
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Data received from n8n:", data); // Keep this for now
+            
+            // --- THIS LINE HAS BEEN UPDATED ---
+            botui.message.update(index, {
+              content: data.output ?? "Pas de réponse reçue." // Changed from data.reply to data.output
+            }).then(askUser);
+          })
+          .catch(error => {
+            console.error("Erreur lors de la connexion ou du traitement de la réponse de l'IA:", error);
+            botui.message.update(index, {
+              content: "Erreur de connexion à l'agent IA."
+            });
+          });
+        });
+      });
+    }
+
+    // Start the conversation
+    botui.message.add({
+      content: 'Bonjour ! Je suis BizBot. Comment puis-je vous aider ?'
+    }).then(askUser);
+  </script>
+</body>
+</html>
