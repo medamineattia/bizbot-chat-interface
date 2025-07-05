@@ -14,26 +14,47 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            padding: 0; /* Remove body padding as container will have margin */
+            padding: 0;
             margin: 0;
             box-sizing: border-box; /* Include padding/border in element's total width/height */
+            display: flex; /* Use flexbox to center content vertically if needed */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            align-items: center; /* Center chat container vertically */
+            justify-content: center; /* Center chat container horizontally */
         }
+        
         #chat-container {
-            width: 95%; /* Make it fluid for smaller screens */
-            max-width: 600px; /* Keep it from getting too wide on large screens */
-            margin: 15px auto; /* Add some margin at top/bottom and center horizontally */
             background: white;
-            padding: 15px; /* Slightly adjusted padding */
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            
+            /* Default styles for smaller screens (mobile-first approach) */
+            width: calc(100% - 30px); /* 100% minus 15px padding on each side */
+            padding: 15px;
+            margin: 0 auto; /* Center horizontally */
+            min-height: 80vh; /* Make it take up more vertical space on mobile */
+            display: flex; /* Use flexbox for inner content if needed */
+            flex-direction: column;
+            justify-content: space-between; /* Pushes input to bottom */
         }
 
-        /* Basic adjustments for very small screens if needed, though 95% should cover most */
-        @media (max-width: 400px) {
+        /* Styles for larger screens (e.g., tablets and desktops) */
+        @media (min-width: 768px) { /* Adjust breakpoint as needed */
             #chat-container {
-                padding: 10px; /* Even less padding on very small devices */
-                margin: 10px auto;
+                max-width: 600px; /* Limit width on larger screens */
+                min-height: 600px; /* Fixed height on desktop, or adjust as needed */
+                height: auto; /* Allow height to adjust to content on desktop */
             }
+        }
+
+        /* Adjust BotUI's action area to stick to bottom if using flexbox for chat-container */
+        .botui-messages,
+        .botui-actions {
+            flex-shrink: 0; /* Prevent from shrinking */
+        }
+        .botui-messages {
+            flex-grow: 1; /* Allow messages to take up available space */
+            overflow-y: auto; /* Enable scrolling for messages */
         }
     </style>
 </head>
@@ -74,7 +95,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // console.log( data); // This line is now commented out, as discussed
+                        // console.log( data); // This line remains commented out
 
                         botui.message.update(index, {
                             content: data.output ?? "Pas de réponse reçue."
